@@ -1,4 +1,5 @@
 import express from "express";
+import fetch from "node-fetch";
 const router = express.Router();
 
 const baseUrl = "https://newsapi.org/v2/top-headlines";
@@ -11,19 +12,16 @@ if (!apiKey) {
   process.exit(0);
 }
 
-// 🔧 Add API key to the query object
 function addApiKey(queryObject) {
   return { ...queryObject, apiKey: apiKey };
 }
 
-// 🔧 Build full request URL
 function createUrlFromQueryObject(queryObjectWithApiKey) {
   const queryString = new URLSearchParams(queryObjectWithApiKey).toString();
   const url = baseUrl + "?" + queryString;
   return url;
 }
 
-// 🌐 Fetch data from NewsAPI
 async function fetchData(url) {
   let data = null;
   try {
@@ -39,7 +37,7 @@ async function fetchData(url) {
   }
 }
 
-// ✅ GET /news — fetch and return news articles
+// ✅ GET: use hardcoded query
 router.get("/", async (req, res) => {
   let fixedQueryObject = {
     country: "us",
@@ -47,6 +45,15 @@ router.get("/", async (req, res) => {
   };
   let queryObject = addApiKey(fixedQueryObject);
   let url = createUrlFromQueryObject(queryObject);
+  let newsArticles = await fetchData(url);
+  res.send(newsArticles);
+});
+
+// ✅ POST: accept query object from request body
+router.post("/", async (req, res) => {
+  let query = req.body;
+  let queryObjectWithApiKey = addApiKey(query);
+  let url = createUrlFromQueryObject(queryObjectWithApiKey);
   let newsArticles = await fetchData(url);
   res.send(newsArticles);
 });
